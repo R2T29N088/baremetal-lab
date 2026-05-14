@@ -1,9 +1,8 @@
 name: CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -21,7 +20,8 @@ jobs:
 
       - name: Install QEMU
         run: |
-          sudo apt install qemu-system-arm
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-arm
 
       - name: Check QEMU version
         run: qemu-system-arm --version
@@ -46,6 +46,8 @@ jobs:
                       -nographic \
                       1>qemu-stdout-$timestamp.log \
                       2>qemu-stderr-$timestamp.log
+          
+          set -e
 
           status=$?   # Save exit code from timeout/QEMU
           echo "=== QEMU EXIT CODE ==="
@@ -57,13 +59,18 @@ jobs:
           echo "=== QEMU STDERR (QEMU messages) ==="
           cat qemu-stderr-$timestamp.log || true
 
-          echo "=== Verify that the expected UART0 output is present ==="
-          grep "Hello World" qemu-stdout-$timestamp.log
+          echo "=== EXPECTED OUTPUT CHECK ==="
+          if grep -q "Hello World" qemu-stdout-$timestamp.log; then
+            echo "OK: Found expected output"
+          else
+            echo "ERROR: Expected output not found"
+            exit 1
+          fi
 
       - name: Upload QEMU logs and firmware binaries
         uses: actions/upload-artifact@v4
         with:
-          name: qemu-run-${{ github.run_id }}
+          name: qemu-run-pr${{ github.event.pull_request.number }}-${{ github.run_id }}
           path: |
             qemu-stdout-*.log
             qemu-stderr-*.log
