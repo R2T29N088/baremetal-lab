@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: tools/scripts/get_toolchain.sh
+
+      - name: Install CMSIS
+        run: tools/scripts/get_cmsis.sh
+
+      - name: Install QEMU
+        run: |
+          sudo apt install qemu-system-arm
+
+      - name: Check QEMU version
+        run: qemu-system-arm --version
+
+      - name: Build
+        run: make
+
+      - name: Run on QEMU and verify output
+        run: |
+          # Do not stop the script when timeout returns exit code 124
+          set +e
+
+          # Generate timestamp (YYYYMMDD-HHMMSS)
+          timestamp=$(date +"%Y%m%d-%H%M%S")
+
+          # Run QEMU:
+          # - stdout (UART0 output) → qemu-stdout.log
+          # - stderr (QEMU internal messages) → qemu-stderr.log
+          timeout 5s qemu-system-arm \
+                      -M lm3s6965evb \
+                      -kernel ./out/qemu-lm3s6965evb.bin \
+                      -nographic \
+                      1>qemu-stdout-$timestamp.log \
+                      2>qemu-stderr-$timestamp.log
+
+          status=$?   # Save exit code from timeout/QEMU
+          echo "=== QEMU EXIT CODE ==="
+          echo "$status"
+
+          echo "=== QEMU STDOUT (UART0) ==="
+          cat qemu-stdout-$timestamp.log || true
+
+          echo "=== QEMU STDERR (QEMU messages) ==="
+          cat qemu-stderr-$timestamp.log || true
+
+          echo "=== Verify that the expected UART0 output is present ==="
+          grep "Hello World" qemu-stdout-$timestamp.log
+
+      - name: Upload QEMU logs and firmware binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-run-${{ github.run_id }}
+          path: |
+            qemu-stdout-*.log
+            qemu-stderr-*.log
+            out/qemu-lm3s6965evb.elf
+            out/qemu-lm3s6965evb.bin
+            out/qemu-lm3s6965evb.map
+            out/qemu-lm3s6965evb.disasm
