@@ -7,9 +7,8 @@
 /*----------------------------------------------------------------------------
   Vector Table
  *----------------------------------------------------------------------------*/
-typedef void(*VECTOR_TABLE_Type)(void);
 
- /* MSP */
+/* MSP */
 extern uint32_t _msp_top;
 
 /* Handler */
@@ -27,10 +26,10 @@ void Default_Handler(void)
 #define SysTick_Handler     Default_Handler   /*  -1 SysTick Handler */
 
 /* Table */
-static const VECTOR_TABLE_Type __VECTOR_TABLE[] __attribute__((used, section(".vectors"), aligned(256))) =
+const void* __VECTOR_TABLE[] __attribute__((used, section(".vectors"), aligned(256))) =
 {
   /* MSP */
-  (VECTOR_TABLE_Type)&_msp_top,
+  &_msp_top,
 
   /* Exception */
   Reset_Handler,                              /*     Reset Handler */

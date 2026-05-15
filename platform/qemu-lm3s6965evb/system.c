@@ -5,6 +5,8 @@
 #include <platform.h>
 #include <platform/uart.h>
 
+extern const void* __VECTOR_TABLE[];
+
 /*----------------------------------------------------------------------------
   System initialization function
  *----------------------------------------------------------------------------*/
