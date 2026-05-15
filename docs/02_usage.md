@@ -98,22 +98,26 @@ $ sudo apt install qemu-system-arm
 その後、以下のようにコマンドすることで、QEMU上で `./out/qemu-lm3s6965evb.elf` を実行することができます。
 
 ```
-$ qemu-system-arm -M lm3s6965evb -kernel ./out/qemu-lm3s6965evb.elf -nographic
+$ timeout 5s qemu-system-arm -M lm3s6965evb -kernel ./out/qemu-lm3s6965evb.elf -nographic
 ```
 または
 ```
-$ qemu-system-arm -M lm3s6965evb -kernel ./out/qemu-lm3s6965evb.bin -nographic
+$ timeout 5s qemu-system-arm -M lm3s6965evb -kernel ./out/qemu-lm3s6965evb.bin -nographic
 ```
 
+注意：`timeout 5s` は QEMU を 5 秒で強制終了させるためのコマンドです。
 
-実行すると、以下のログが出力されます。
+注意：`.elf` / `.bin` のどちらも QEMU で実行できます
+
+実行すると、以下のログが出力されます。（timeout 5s を付けているため、5秒経過すると QEMU は自動的に終了します）
 
 ```
 Timer with period zero, disabling
 Hello World
+qemu-system-arm: terminating on signal 15 from pid xxxx (timeout)
 ```
 
-別プロンプトから以下のようにコマンドすることで、QEMU を終了することができます。
+QEMUが終了しない場合、別プロンプトから以下のようにコマンドすることで、QEMU を終了することができます。
 
 ```
 $ pkill qemu-system-arm
